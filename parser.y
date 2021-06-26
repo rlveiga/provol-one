@@ -4,12 +4,21 @@ void yyerror (char *s);
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
 int getValue(char symbol); /* retorna valor de uma variavel dado simbolo */
 void setValue(char symbol, int value); /* atualiza valor de uma variavel dado o simbolo e novo valor */
 void incrementValue(char symbol);
 void zeroValue(char symbol);
+
+char functionDeclaration[100] =  "def main(";
+
+int parametersCount = 0;
+char functionParameters[10]; /* Accepts up to 10 parameters */
+
+void addFunctionParameter(char symbol);
+void formatFunctionDeclaration();
 %}
 
 %start line
@@ -38,13 +47,13 @@ line	: programa init {;}
 init  : ENTRADA varlist_entrada SAIDA varlist_saida cmds {;}
 	;
 
-varlist_entrada : variavel {;} |
-                  varlist_entrada COMMA variavel {;}
+varlist_entrada : variavel { addFunctionParameter($1); } |
+                  varlist_entrada COMMA variavel { addFunctionParameter($3); }
   ;
 
 /* Should update to accept only a single return variable for C program */
-varlist_saida : variavel {;} |
-                  varlist_saida COMMA variavel {;}
+varlist_saida : variavel { formatFunctionDeclaration(); } |
+                  varlist_saida COMMA variavel { formatFunctionDeclaration(); }
   ;
 
 cmds : atribuicao {;} |
@@ -80,6 +89,29 @@ expressao : valor '+' valor { $$ = $1 + $3; } |
             valor '/' variavel { $$ = $1 / getValue($3); }
   ;
 %%
+
+void addFunctionParameter(char symbol) {
+  functionParameters[parametersCount] = symbol;
+  parametersCount++;
+}
+
+void formatFunctionDeclaration() {
+  int currentIndex = 9;
+
+  for(int i = 0; i < parametersCount; i++) {
+    strncat(functionDeclaration, &functionParameters[i], 1);
+
+    if(i != parametersCount - 1) {
+      strncat(functionDeclaration, ", ", 2);
+    }
+
+    else {
+      strncat(functionDeclaration, "):", 2);
+    }
+  }
+
+  printf("%s\n", functionDeclaration);
+}
 
 int getValue(char symbol) {
   int index = symbol - 65;
