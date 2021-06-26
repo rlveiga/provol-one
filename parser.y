@@ -38,13 +38,13 @@ line	: programa init {;}
 init  : ENTRADA varlist_entrada SAIDA varlist_saida cmds {;}
 	;
 
-varlist_entrada : variavel { printf("Program has input %c\n", $1);} |
-                  varlist_entrada COMMA variavel { printf("Program has input %c\n", $3);}
+varlist_entrada : variavel {;} |
+                  varlist_entrada COMMA variavel {;}
   ;
 
 /* Should update to accept only a single return variable for C program */
-varlist_saida : variavel { printf("Program will return %c\n", $1);} |
-                  varlist_saida COMMA variavel { printf("Program will return %c\n", $3);}
+varlist_saida : variavel {;} |
+                  varlist_saida COMMA variavel {;}
   ;
 
 cmds : atribuicao {;} |
@@ -91,7 +91,6 @@ void setValue(char symbol, int value) {
   int index = symbol - 65;
 
   valoresArray[index] = value;
-  printf("Value of %c is now %d\n", symbol, value);
 }
 
 void incrementValue(char symbol) {
