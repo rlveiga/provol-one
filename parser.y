@@ -5,15 +5,16 @@ void yyerror (char *s);
 #include <stdio.h>
 #include <stdlib.h>
 
-int variaveis[26]; /* assumindo variaveis de um caracter de A-Z */
-/* TODO int getValue(char symbol); */ /* retorna valor de uma variavel dado simbolo */
-/* TODO int updateValue(char symbol, int value); */ /* atualiza valor de uma variavel dado o simbolo e novo valor */
+int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
+int getValue(char symbol); /* retorna valor de uma variavel dado simbolo */
+void setValue(char symbol, int value); /* atualiza valor de uma variavel dado o simbolo e novo valor */
 %}
 
 %start line
 %union {char id; int number;}
 
 %token programa
+%token print
 %token ENTRADA
 %token SAIDA
 %token ENQUANTO
@@ -25,7 +26,7 @@ int variaveis[26]; /* assumindo variaveis de um caracter de A-Z */
 %token INC
 %token ZERA
 
-%type <number> line init
+%type <number> line init expressao
 %type <id> varlist_entrada varlist_saida cmds atribuicao
 
 %%
@@ -45,12 +46,34 @@ varlist_saida : variavel { printf("Program will return %c\n", $1);} |
   ;
 
 cmds : atribuicao {;} |
-       cmds atribuicao {;}
+       cmds atribuicao {;} |
+       print variavel { printf("%d\n", getValue($2)); } |
+       cmds print variavel { printf("%d\n", getValue($3)); }
   ;
 
-atribuicao : variavel '=' variavel { printf("%c recebeu o valor de %c\n", $1, $3); } |
-             variavel '=' valor { printf("%c recebeu o valor de %d\n", $1, $3); }
+atribuicao : variavel '=' variavel { setValue($1, getValue($3)); } |
+             variavel '=' valor { setValue($1, $3); } |
+             variavel '=' expressao { setValue($1, $3); }
+  ;
+
+expressao : valor '+' valor { $$ = $1 + $3; } |
+            variavel '+' variavel { $$ = getValue($1) + getValue($3); } |
+            variavel '+' valor { $$ = getValue($1) + $3; } |
+            valor '+' variavel { $$ = $1 + getValue($3); }
+  ;
 %%
+
+int getValue(char symbol) {
+  int index = symbol - 65;
+
+  return valoresArray[index]; 
+}
+
+void setValue(char symbol, int value) {
+  int index = symbol - 65;
+
+  valoresArray[index] = value;
+}
 
 int main(void) { return yyparse(); }
 void yyerror(char *err) { fprintf(stderr, "%s\n", err); }
