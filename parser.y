@@ -8,6 +8,8 @@ void yyerror (char *s);
 int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
 int getValue(char symbol); /* retorna valor de uma variavel dado simbolo */
 void setValue(char symbol, int value); /* atualiza valor de uma variavel dado o simbolo e novo valor */
+void incrementValue(char symbol);
+void zeroValue(char symbol);
 %}
 
 %start line
@@ -48,7 +50,11 @@ varlist_saida : variavel { printf("Program will return %c\n", $1);} |
 cmds : atribuicao {;} |
        cmds atribuicao {;} |
        print variavel { printf("%d\n", getValue($2)); } |
-       cmds print variavel { printf("%d\n", getValue($3)); }
+       cmds print variavel { printf("%d\n", getValue($3)); } |
+       INC '(' variavel ')' { incrementValue($3); } |
+       cmds INC '(' variavel ')' { incrementValue($4); } |
+       ZERA '(' variavel ')' { zeroValue($3); } |
+       cmds ZERA '(' variavel ')' { zeroValue($4); }
   ;
 
 atribuicao : variavel '=' variavel { setValue($1, getValue($3)); } |
@@ -86,6 +92,15 @@ void setValue(char symbol, int value) {
 
   valoresArray[index] = value;
   printf("Value of %c is now %d\n", symbol, value);
+}
+
+void incrementValue(char symbol) {
+  int newValue = getValue(symbol) + 1;
+  setValue(symbol, newValue);
+}
+
+void zeroValue(char symbol) {
+  setValue(symbol, 0);
 }
 
 int main(void) { return yyparse(); }
