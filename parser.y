@@ -59,7 +59,19 @@ atribuicao : variavel '=' variavel { setValue($1, getValue($3)); } |
 expressao : valor '+' valor { $$ = $1 + $3; } |
             variavel '+' variavel { $$ = getValue($1) + getValue($3); } |
             variavel '+' valor { $$ = getValue($1) + $3; } |
-            valor '+' variavel { $$ = $1 + getValue($3); }
+            valor '+' variavel { $$ = $1 + getValue($3); } |
+            valor '-' valor { $$ = $1 - $3; } |
+            variavel '-' variavel { $$ = getValue($1) - getValue($3); } |
+            variavel '-' valor { $$ = getValue($1) - $3; } |
+            valor '-' variavel { $$ = $1 - getValue($3); } |
+            valor '*' valor { $$ = $1 * $3; } |
+            variavel '*' variavel { $$ = getValue($1) * getValue($3); } |
+            variavel '*' valor { $$ = getValue($1) * $3; } |
+            valor '*' variavel { $$ = $1 * getValue($3); } |
+            valor '/' valor { $$ = $1 / $3; } |
+            variavel '/' variavel { $$ = getValue($1) / getValue($3); } |
+            variavel '/' valor { $$ = getValue($1) / $3; } |
+            valor '/' variavel { $$ = $1 / getValue($3); }
   ;
 %%
 
@@ -73,6 +85,7 @@ void setValue(char symbol, int value) {
   int index = symbol - 65;
 
   valoresArray[index] = value;
+  printf("Value of %c is now %d\n", symbol, value);
 }
 
 int main(void) { return yyparse(); }

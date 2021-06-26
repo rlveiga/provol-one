@@ -7,7 +7,7 @@
 "SAIDA"   { return SAIDA; }
 "print"   { return print; }
 ","       { return COMMA; }
-[=+]       { return yytext[0]; }
+[=+\-*/]   { return yytext[0]; }
 [A-Z]+    { yylval.id = yytext[0]; return variavel; }
 [0-9]+    { yylval.number = atoi(yytext); return valor; }
 [ \t\n]   { ; }
