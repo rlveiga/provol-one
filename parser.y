@@ -18,7 +18,14 @@ int parametersCount = 0;
 char functionParameters[10]; /* Accepts up to 10 parameters */
 
 void addFunctionParameter(char symbol);
-void formatFunctionDeclaration();
+void onFunctionDeclarationEnd();
+
+int functionDeclarationFinished = 0;
+
+int returnSymbolCount = 0;
+char returnSymbols[10]; /* Accepts up to 10 return values */
+
+void addReturnSymbol(char symbol);
 %}
 
 %start line
@@ -51,9 +58,8 @@ varlist_entrada : variavel { addFunctionParameter($1); } |
                   varlist_entrada COMMA variavel { addFunctionParameter($3); }
   ;
 
-/* Should update to accept only a single return variable for C program */
-varlist_saida : variavel { formatFunctionDeclaration(); } |
-                  varlist_saida COMMA variavel { formatFunctionDeclaration(); }
+varlist_saida : variavel { onFunctionDeclarationEnd(); addReturnSymbol($1); } |
+                  varlist_saida COMMA variavel { onFunctionDeclarationEnd(); addReturnSymbol($3); }
   ;
 
 cmds : atribuicao {;} |
@@ -95,22 +101,32 @@ void addFunctionParameter(char symbol) {
   parametersCount++;
 }
 
-void formatFunctionDeclaration() {
-  int currentIndex = 9;
+void onFunctionDeclarationEnd() {
+  if(!functionDeclarationFinished) {
+    int currentIndex = 9;
 
-  for(int i = 0; i < parametersCount; i++) {
-    strncat(functionDeclaration, &functionParameters[i], 1);
+    for(int i = 0; i < parametersCount; i++) {
+      strncat(functionDeclaration, &functionParameters[i], 1);
 
-    if(i != parametersCount - 1) {
-      strncat(functionDeclaration, ", ", 2);
+      if(i != parametersCount - 1) {
+        strncat(functionDeclaration, ", ", 2);
+      }
+
+      else {
+        strncat(functionDeclaration, "):", 2);
+      }
     }
 
-    else {
-      strncat(functionDeclaration, "):", 2);
-    }
+    printf("%s\n", functionDeclaration);
+    functionDeclarationFinished = 1;
   }
+}
 
-  printf("%s\n", functionDeclaration);
+void addReturnSymbol(char symbol) {
+  returnSymbols[returnSymbolCount] = symbol;
+  returnSymbolCount++;
+
+  printf("%c\n", returnSymbols[returnSymbolCount - 1]);
 }
 
 int getValue(char symbol) {
