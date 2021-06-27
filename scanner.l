@@ -7,6 +7,7 @@
 "SAIDA"       { return SAIDA; }
 "INC"         { return INC; }
 "ZERA"        { return ZERA; }
+"FIM"         { return FIM; }
 "print"       { return print; }
 ","           { return COMMA; }
 [=+\-*/()]    { return yytext[0]; }
