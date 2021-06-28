@@ -5,35 +5,36 @@ void yyerror (char *s);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+FILE *output_file;
 
 int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
+
 int getValue(char symbol); /* retorna valor de uma variavel dado simbolo */
 void setValue(char symbol, int value); /* atualiza valor de uma variavel dado o simbolo e novo valor */
 void incrementValue(char symbol);
 void zeroValue(char symbol);
 
-char functionDeclaration[100] =  "def main(";
+int tabCount = 1;
+
+int shouldWriteFunctionDeclaration = 1;
 
 int parametersCount = 0;
 char functionParameters[10]; /* Accepts up to 10 parameters */
 
 void addFunctionParameter(char symbol);
-void printFunctionDeclaration();
-
-int functionDeclarationFinished = 0;
 
 int returnSymbolCount = 0;
 char returnSymbols[10]; /* Accepts up to 10 return values */
 
 void addReturnSymbol(char symbol);
 
-int commandCount = 0;
-char commandList[20][20]; /* Accepts up to 20 commands of max length 20 */
-
-void addAttributionCommandChar(char symbolA, char symbolB);
-void addAttributionCommandInt(char symbolA, int value);
-
-void printReturn();
+void writeAttributionCommandChar(char symbolA, char symbolB);
+void writeAttributionCommandInt(char symbolA, int value);
+void writeIncCommand(char symbolA);
+void writeZeraCommand(char symbolA);
+void writeWhileStatement(char symbol);
 
 void onProgramEnd();
 %}
@@ -55,7 +56,7 @@ void onProgramEnd();
 %token ZERA
 
 %type <number> line init expressao
-%type <id> varlist_entrada varlist_saida cmds atribuicao
+%type <id> varlist_entrada varlist_saida cmds atribuicao enquanto_condicao
 
 %%
 
@@ -69,22 +70,27 @@ varlist_entrada : variavel { addFunctionParameter($1); } |
   ;
 
 varlist_saida : variavel { addReturnSymbol($1); } |
-                  varlist_saida COMMA variavel { addReturnSymbol($3); }
+                varlist_saida COMMA variavel { addReturnSymbol($3); }
   ;
 
 cmds : atribuicao {;} |
        cmds atribuicao {;} |
        print variavel { printf("%d\n", getValue($2)); } |
        cmds print variavel { printf("%d\n", getValue($3)); } |
-       INC '(' variavel ')' { incrementValue($3); } |
-       cmds INC '(' variavel ')' { incrementValue($4); } |
-       ZERA '(' variavel ')' { zeroValue($3); } |
-       cmds ZERA '(' variavel ')' { zeroValue($4); }
+       ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
+       cmds ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
+       INC '(' variavel ')' { incrementValue($3); writeIncCommand($3); } |
+       cmds INC '(' variavel ')' { incrementValue($4); writeIncCommand($4); } |
+       ZERA '(' variavel ')' { zeroValue($3); writeZeraCommand($3); } |
+       cmds ZERA '(' variavel ')' { zeroValue($4); writeZeraCommand($4); }
   ;
 
-atribuicao : variavel '=' variavel { setValue($1, getValue($3)); addAttributionCommandChar($1, $3); } |
-             variavel '=' valor { setValue($1, $3); addAttributionCommandInt($1, $3); } |
-             variavel '=' expressao { setValue($1, $3); addAttributionCommandInt($1, $3); }
+enquanto_condicao : variavel { writeWhileStatement($1); }
+  ;
+
+atribuicao : variavel '=' variavel { setValue($1, getValue($3)); writeAttributionCommandChar($1, $3); } |
+             variavel '=' valor { setValue($1, $3); writeAttributionCommandInt($1, $3); } |
+             variavel '=' expressao { setValue($1, $3); writeAttributionCommandInt($1, $3); }
   ;
 
 expressao : valor '+' valor { $$ = $1 + $3; } |
@@ -132,78 +138,94 @@ void addFunctionParameter(char symbol) {
   parametersCount++;
 }
 
+void writeFunctionDeclaration() {
+  if(shouldWriteFunctionDeclaration) {
+    fprintf(output_file, "def main(");
+
+    for(int i = 0; i < parametersCount; i++) {
+      fputc(functionParameters[i], output_file);
+
+      if(i != parametersCount - 1) {
+        fprintf(output_file, ", ");
+      }
+
+      else {
+        fprintf(output_file, "):\n\t");
+      }
+    }
+
+    shouldWriteFunctionDeclaration = 0;
+  }
+}
+
+void writeAttributionCommandChar(char symbolA, char symbolB) {  
+  printf("Using tab of size %d\n", tabCount);
+  fprintf(output_file, "%c = %c\n", symbolA, symbolB);
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
+void writeAttributionCommandInt(char symbolA, int value) {  
+  fprintf(output_file, "%c = %d\n", symbolA, value);
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
+void writeIncCommand(char symbol) {  
+  fprintf(output_file, "%c += 1\n", symbol);
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
+void writeWhileStatement(char symbol) {  
+  fprintf(output_file, "while %c:\n", symbol);
+
+  tabCount++;
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
+void writeZeraCommand(char symbol) {  
+  fprintf(output_file, "%c = 0\n", symbol);
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
 void addReturnSymbol(char symbol) {
+  writeFunctionDeclaration();
+
   returnSymbols[returnSymbolCount] = symbol;
   returnSymbolCount++;
 }
 
-void printFunctionDeclaration() {
-  if(!functionDeclarationFinished) {
-    int currentIndex = 9;
-
-    for(int i = 0; i < parametersCount; i++) {
-      strncat(functionDeclaration, &functionParameters[i], 1);
-
-      if(i != parametersCount - 1) {
-        strncat(functionDeclaration, ", ", 2);
-      }
-
-      else {
-        strncat(functionDeclaration, "):", 2);
-      }
-    }
-
-    printf("%s\n", functionDeclaration);
-    functionDeclarationFinished = 1;
-  }
-}
-
-void addAttributionCommandChar(char symbolA, char symbolB) {  
-  char command[20];
-  snprintf(command, sizeof(command), "%c = %c", symbolA, symbolB);
-
-  strcpy(commandList[commandCount], command);
-  commandCount++;
-}
-
-void addAttributionCommandInt(char symbolA, int value) {  
-  char command[20];
-  snprintf(command, sizeof(command), "%c = %d", symbolA, value);
-
-  strcpy(commandList[commandCount], command);
-  commandCount++;
-}
-
-void printCommands() {
-  int counter = 0;
-  
-  while(commandList[counter][0] != '\0') {
-    printf("%s\n", commandList[counter]);
-    counter++;
-  }
-}
-
-void printReturn() {
-  char returnStatement[17] = "return ";
+void onProgramEnd() {
+  fprintf(output_file, "return ");
 
   for(int i = 0; i < returnSymbolCount; i++) {
-    strncat(returnStatement, &returnSymbols[i], 1);
+    fputc(returnSymbols[i], output_file);
 
     if(i != returnSymbolCount - 1) {
-      strncat(returnStatement, ", ", 2);
+      fprintf(output_file, ", ");
     }
   }
 
-  printf("%s", returnStatement);
-}
-
-void onProgramEnd() {
-  printFunctionDeclaration();
-  printCommands();
-  printReturn();
+  fclose(output_file);
 }
 
 int main(void) {
+  output_file = fopen("./outputs/generated.py", "w");
+
   return yyparse(); 
 }
+
 void yyerror(char *err) { fprintf(stderr, "%s\n", err); }

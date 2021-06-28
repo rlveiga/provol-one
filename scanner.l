@@ -5,6 +5,8 @@
 "Programa"    { return programa; }
 "ENTRADA"     { return ENTRADA; }
 "SAIDA"       { return SAIDA; }
+"ENQUANTO"    { return ENQUANTO; }
+"FACA"        { return FACA; }
 "INC"         { return INC; }
 "ZERA"        { return ZERA; }
 "FIM"         { return FIM; }
