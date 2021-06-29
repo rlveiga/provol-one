@@ -1,10 +1,15 @@
 # provol-one
 Gerador de código Python utilizando Lex/Yacc para o Trabalho Final de INF1022 - Analisadores Léxicos e Sintáticos
 
+https://github.com/rlveiga/provol-one
+
 ## Como rodar o programa:
 - Garanta que `lex` e `yacc` estão disponíveis pela linha de comando\
 - Clone este repositório
 - Na pasta do projeto clonado, rode `chmod +x ./run.sh && ./run.sh`
+- Rode `./parser` e comece a escrever o programa Provol-One desejado
+
+O arquivo `run.sh` gera os arquivo `y.tab.c`, `y.tab.h`, `y.tab.o`, `lex.yy.c`, `lex.yy.o` e o executável `parser`
 
 ## Exemplos
 1. Programa Provol-One utilizando condições **se/senão** (if/then) e **repetição** (for...in)
