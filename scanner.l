@@ -14,6 +14,11 @@
 "print"       { return print; }
 ","           { return COMMA; }
 "=="          { return IS; }
+"!="          { return ISNOT; }
+"<"           { return LESSTHAN; }
+"<="          { return LESSTHANEQ; }
+">"           { return GREATERTHAN; }
+">="          { return GREATERTHANEQ; }
 [=+\-*/()]    { return yytext[0]; }
 [A-Z]+        { yylval.id = yytext[0]; return variavel; }
 [0-9]+        { yylval.number = atoi(yytext); return valor; }

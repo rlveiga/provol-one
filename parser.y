@@ -53,6 +53,11 @@ void onProgramEnd();
 %token FIM
 %token COMMA
 %token IS
+%token ISNOT
+%token LESSTHAN
+%token LESSTHANEQ
+%token GREATERTHAN
+%token GREATERTHANEQ
 %token <id> variavel
 %token <number> valor
 %token INC
@@ -81,8 +86,8 @@ cmds : atribuicao {;} |
        cmds print variavel { printf("%d\n", getValue($3)); } |
        ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
        cmds ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
-       SE se_condicao FACA cmds FIM { printf("Current tab count %d\n", tabCount); tabCount = tabCount - 1; printf("New tab count %d\n", tabCount); } |
-       cmds SE se_condicao FACA cmds FIM { printf("Current tab count %d\n", tabCount); tabCount = tabCount - 1; printf("New tab count %d\n", tabCount); } |
+       SE se_condicao FACA cmds FIM { tabCount--; } |
+       cmds SE se_condicao FACA cmds FIM { tabCount--; } |
        INC '(' variavel ')' { incrementValue($3); writeIncCommand($3); } |
        cmds INC '(' variavel ')' { incrementValue($4); writeIncCommand($4); } |
        ZERA '(' variavel ')' { zeroValue($3); writeZeraCommand($3); } |
@@ -92,7 +97,12 @@ cmds : atribuicao {;} |
 enquanto_condicao : variavel { writeWhileStatement($1); }
   ;
 
-se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); }
+se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); } |
+              variavel ISNOT variavel { writeIfStatement($1, "!=", $3); } |
+              variavel LESSTHAN variavel { writeIfStatement($1, "<", $3); } |
+              variavel LESSTHANEQ variavel { writeIfStatement($1, "<=", $3); } |
+              variavel GREATERTHAN variavel { writeIfStatement($1, ">", $3); } |
+              variavel GREATERTHANEQ variavel { writeIfStatement($1, ">=", $3); }
   ;
 
 atribuicao : variavel '=' variavel { setValue($1, getValue($3)); writeAttributionCommandChar($1, $3); } |
@@ -237,6 +247,7 @@ void onProgramEnd() {
   }
 
   fclose(output_file);
+  exit(1);
 }
 
 int main(void) {
