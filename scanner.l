@@ -12,7 +12,6 @@
 "INC"           { return INC; }
 "ZERA"          { return ZERA; }
 "FIM"           { return FIM; }
-"print"         { return print; }
 ","             { return COMMA; }
 "=="            { return IS; }
 "!="            { return ISNOT; }

@@ -11,22 +11,17 @@ FILE *output_file;
 
 int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
 
-int getValue(char symbol); /* retorna valor de uma variavel dado simbolo */
-void setValue(char symbol, int value); /* atualiza valor de uma variavel dado o simbolo e novo valor */
-void incrementValue(char symbol);
-void zeroValue(char symbol);
-
 int tabCount = 1;
 
-int shouldWriteFunctionDeclaration = 1;
+int shouldWriteFunctionDeclaration = 1; /* evita problema de declaração duplicada */
 
 int parametersCount = 0;
-char functionParameters[10]; /* Accepts up to 10 parameters */
+char functionParameters[10]; /* aceita até 10 parametros */
 
 void addFunctionParameter(char symbol);
 
 int returnSymbolCount = 0;
-char returnSymbols[10]; /* Accepts up to 10 return values */
+char returnSymbols[10]; /* aceita até 10 valores de retorno */
 
 void addReturnSymbol(char symbol);
 
@@ -48,7 +43,6 @@ void onProgramEnd();
 %union {char id; int number;}
 
 %token programa
-%token print
 %token ENTRADA
 %token SAIDA
 %token ENQUANTO
@@ -88,8 +82,6 @@ varlist_saida : variavel { addReturnSymbol($1); } |
 
 cmds : atribuicao {;} |
        cmds atribuicao {;} |
-       print variavel { printf("%d\n", getValue($2)); } |
-       cmds print variavel { printf("%d\n", getValue($3)); } |
        ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
        cmds ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
        FACA valor VEZES { writeForStatement($2); } cmds FIM { tabCount--; } |
@@ -98,10 +90,10 @@ cmds : atribuicao {;} |
        cmds SE se_condicao FACA cmds FIM { tabCount--; } |
        SE se_condicao FACA cmds FIM { tabCount--; } SENAO { writeElseStatement(); } cmds FIM { tabCount--; } |
        cmds SE se_condicao FACA cmds FIM { tabCount--; } SENAO { writeElseStatement(); } cmds FIM { tabCount--; } |
-       INC '(' variavel ')' { incrementValue($3); writeIncCommand($3); } |
-       cmds INC '(' variavel ')' { incrementValue($4); writeIncCommand($4); } |
-       ZERA '(' variavel ')' { zeroValue($3); writeZeraCommand($3); } |
-       cmds ZERA '(' variavel ')' { zeroValue($4); writeZeraCommand($4); }
+       INC '(' variavel ')' { writeIncCommand($3); } |
+       cmds INC '(' variavel ')' { writeIncCommand($4); } |
+       ZERA '(' variavel ')' { writeZeraCommand($3); } |
+       cmds ZERA '(' variavel ')' { writeZeraCommand($4); }
   ;
 
 enquanto_condicao : variavel { writeWhileStatement($1); }
@@ -127,50 +119,29 @@ se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); } |
               valor GREATERTHANEQ variavel { writeIfStatementIntChar($1, ">=", $3); }
   ;
 
-atribuicao : variavel '=' variavel { setValue($1, getValue($3)); writeAttributionCommandChar($1, $3); } |
-             variavel '=' valor { setValue($1, $3); writeAttributionCommandInt($1, $3); } |
-             variavel '=' expressao { setValue($1, $3); writeAttributionCommandInt($1, $3); }
+atribuicao : variavel '=' variavel { writeAttributionCommandChar($1, $3); } |
+             variavel '=' valor { writeAttributionCommandInt($1, $3); } |
+             variavel '=' expressao { writeAttributionCommandInt($1, $3); }
   ;
 
-expressao : valor '+' valor { $$ = $1 + $3; } |
-            variavel '+' variavel { $$ = getValue($1) + getValue($3); } |
-            variavel '+' valor { $$ = getValue($1) + $3; } |
-            valor '+' variavel { $$ = $1 + getValue($3); } |
-            valor '-' valor { $$ = $1 - $3; } |
-            variavel '-' variavel { $$ = getValue($1) - getValue($3); } |
-            variavel '-' valor { $$ = getValue($1) - $3; } |
-            valor '-' variavel { $$ = $1 - getValue($3); } |
-            valor '*' valor { $$ = $1 * $3; } |
-            variavel '*' variavel { $$ = getValue($1) * getValue($3); } |
-            variavel '*' valor { $$ = getValue($1) * $3; } |
-            valor '*' variavel { $$ = $1 * getValue($3); } |
-            valor '/' valor { $$ = $1 / $3; } |
-            variavel '/' variavel { $$ = getValue($1) / getValue($3); } |
-            variavel '/' valor { $$ = getValue($1) / $3; } |
-            valor '/' variavel { $$ = $1 / getValue($3); }
+expressao : valor '+' valor { ; } |
+            variavel '+' variavel { ; } |
+            variavel '+' valor { ; } |
+            valor '+' variavel { ; } |
+            valor '-' valor { ; } |
+            variavel '-' variavel { ; } |
+            variavel '-' valor { ; } |
+            valor '-' variavel { ; } |
+            valor '*' valor { ; } |
+            variavel '*' variavel { ; } |
+            variavel '*' valor { ; } |
+            valor '*' variavel { ; } |
+            valor '/' valor { ; } |
+            variavel '/' variavel { ; } |
+            variavel '/' valor { ; } |
+            valor '/' variavel { ; }
   ;
 %%
-
-int getValue(char symbol) {
-  int index = symbol - 65;
-
-  return valoresArray[index]; 
-}
-
-void setValue(char symbol, int value) {
-  int index = symbol - 65;
-
-  valoresArray[index] = value;
-}
-
-void incrementValue(char symbol) {
-  int newValue = getValue(symbol) + 1;
-  setValue(symbol, newValue);
-}
-
-void zeroValue(char symbol) {
-  setValue(symbol, 0);
-}
 
 void addFunctionParameter(char symbol) {
   functionParameters[parametersCount] = symbol;
