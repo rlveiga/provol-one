@@ -35,6 +35,7 @@ void writeAttributionCommandInt(char symbolA, int value);
 void writeIncCommand(char symbolA);
 void writeZeraCommand(char symbolA);
 void writeWhileStatement(char symbol);
+void writeIfStatement(char symbolA, char* condition, char symbolB);
 
 void onProgramEnd();
 %}
@@ -47,17 +48,18 @@ void onProgramEnd();
 %token ENTRADA
 %token SAIDA
 %token ENQUANTO
+%token SE
 %token FACA
 %token FIM
 %token COMMA
+%token IS
 %token <id> variavel
 %token <number> valor
 %token INC
 %token ZERA
 
 %type <number> line init expressao
-%type <id> varlist_entrada varlist_saida cmds atribuicao enquanto_condicao
-
+%type <id> varlist_entrada varlist_saida cmds atribuicao enquanto_condicao se_condicao
 %%
 
 line	: programa init {;}
@@ -79,6 +81,8 @@ cmds : atribuicao {;} |
        cmds print variavel { printf("%d\n", getValue($3)); } |
        ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
        cmds ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
+       SE se_condicao FACA cmds FIM { printf("Current tab count %d\n", tabCount); tabCount = tabCount - 1; printf("New tab count %d\n", tabCount); } |
+       cmds SE se_condicao FACA cmds FIM { printf("Current tab count %d\n", tabCount); tabCount = tabCount - 1; printf("New tab count %d\n", tabCount); } |
        INC '(' variavel ')' { incrementValue($3); writeIncCommand($3); } |
        cmds INC '(' variavel ')' { incrementValue($4); writeIncCommand($4); } |
        ZERA '(' variavel ')' { zeroValue($3); writeZeraCommand($3); } |
@@ -86,6 +90,9 @@ cmds : atribuicao {;} |
   ;
 
 enquanto_condicao : variavel { writeWhileStatement($1); }
+  ;
+
+se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); }
   ;
 
 atribuicao : variavel '=' variavel { setValue($1, getValue($3)); writeAttributionCommandChar($1, $3); } |
@@ -175,18 +182,28 @@ void writeAttributionCommandInt(char symbolA, int value) {
   }
 }
 
-void writeIncCommand(char symbol) {  
-  fprintf(output_file, "%c += 1\n", symbol);
+void writeWhileStatement(char symbol) {  
+  fprintf(output_file, "while %c:\n", symbol);
+
+  tabCount++;
 
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
   }
 }
 
-void writeWhileStatement(char symbol) {  
-  fprintf(output_file, "while %c:\n", symbol);
+void writeIfStatement(char symbolA, char* condition, char symbolB) {  
+  fprintf(output_file, "if %c %s %c:\n", symbolA, condition, symbolB);
 
   tabCount++;
+
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
+
+void writeIncCommand(char symbol) {  
+  fprintf(output_file, "%c += 1\n", symbol);
 
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
@@ -209,7 +226,7 @@ void addReturnSymbol(char symbol) {
 }
 
 void onProgramEnd() {
-  fprintf(output_file, "return ");
+  fprintf(output_file, "\n\treturn ");
 
   for(int i = 0; i < returnSymbolCount; i++) {
     fputc(returnSymbols[i], output_file);

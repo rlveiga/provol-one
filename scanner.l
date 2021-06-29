@@ -6,12 +6,14 @@
 "ENTRADA"     { return ENTRADA; }
 "SAIDA"       { return SAIDA; }
 "ENQUANTO"    { return ENQUANTO; }
+"SE"          { return SE; }
 "FACA"        { return FACA; }
 "INC"         { return INC; }
 "ZERA"        { return ZERA; }
 "FIM"         { return FIM; }
 "print"       { return print; }
 ","           { return COMMA; }
+"=="          { return IS; }
 [=+\-*/()]    { return yytext[0]; }
 [A-Z]+        { yylval.id = yytext[0]; return variavel; }
 [0-9]+        { yylval.number = atoi(yytext); return valor; }
