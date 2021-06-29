@@ -36,6 +36,8 @@ void writeIncCommand(char symbolA);
 void writeZeraCommand(char symbolA);
 void writeWhileStatement(char symbol);
 void writeIfStatement(char symbolA, char* condition, char symbolB);
+void writeIfStatementCharInt(char symbol, char* condition, int value);
+void writeIfStatementIntChar(int value, char* condition, char symbol);
 
 void onProgramEnd();
 %}
@@ -98,11 +100,23 @@ enquanto_condicao : variavel { writeWhileStatement($1); }
   ;
 
 se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); } |
+              variavel IS valor { writeIfStatementCharInt($1, "==", $3); } |
+              valor IS variavel { writeIfStatementIntChar($1, "==", $3); } |
               variavel ISNOT variavel { writeIfStatement($1, "!=", $3); } |
+              variavel ISNOT valor { writeIfStatementCharInt($1, "!=", $3); } |
+              valor ISNOT variavel { writeIfStatementIntChar($1, "!=", $3); } |
               variavel LESSTHAN variavel { writeIfStatement($1, "<", $3); } |
+              variavel LESSTHAN valor { writeIfStatementCharInt($1, "<", $3); } |
+              valor LESSTHAN variavel { writeIfStatementIntChar($1, "<", $3); } |
               variavel LESSTHANEQ variavel { writeIfStatement($1, "<=", $3); } |
+              variavel LESSTHANEQ valor { writeIfStatementCharInt($1, "<=", $3); } |
+              valor LESSTHANEQ variavel { writeIfStatementIntChar($1, "<=", $3); } |
               variavel GREATERTHAN variavel { writeIfStatement($1, ">", $3); } |
-              variavel GREATERTHANEQ variavel { writeIfStatement($1, ">=", $3); }
+              variavel GREATERTHAN valor { writeIfStatementCharInt($1, ">", $3); } |
+              valor GREATERTHAN variavel { writeIfStatementIntChar($1, ">", $3); } |
+              variavel GREATERTHANEQ variavel { writeIfStatement($1, ">=", $3); } |
+              variavel GREATERTHANEQ valor { writeIfStatementCharInt($1, ">=", $3); } |
+              valor GREATERTHANEQ variavel { writeIfStatementIntChar($1, ">=", $3); }
   ;
 
 atribuicao : variavel '=' variavel { setValue($1, getValue($3)); writeAttributionCommandChar($1, $3); } |
@@ -167,7 +181,7 @@ void writeFunctionDeclaration() {
       }
 
       else {
-        fprintf(output_file, "):\n\t");
+        fprintf(output_file, "):\n");
       }
     }
 
@@ -175,57 +189,76 @@ void writeFunctionDeclaration() {
   }
 }
 
-void writeAttributionCommandChar(char symbolA, char symbolB) {  
-  printf("Using tab of size %d\n", tabCount);
-  fprintf(output_file, "%c = %c\n", symbolA, symbolB);
-
+void writeAttributionCommandChar(char symbolA, char symbolB) {
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
-  }
+  }  
+
+  fprintf(output_file, "%c = %c\n", symbolA, symbolB);
 }
 
 void writeAttributionCommandInt(char symbolA, int value) {  
-  fprintf(output_file, "%c = %d\n", symbolA, value);
-
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
   }
+
+  fprintf(output_file, "%c = %d\n", symbolA, value);
 }
 
 void writeWhileStatement(char symbol) {  
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+
   fprintf(output_file, "while %c:\n", symbol);
 
   tabCount++;
-
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
 }
 
 void writeIfStatement(char symbolA, char* condition, char symbolB) {  
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+
   fprintf(output_file, "if %c %s %c:\n", symbolA, condition, symbolB);
 
   tabCount++;
+}
 
+void writeIfStatementCharInt(char symbol, char* condition, int value) {  
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
   }
+
+  fprintf(output_file, "if %c %s %d:\n", symbol, condition, value);
+
+  tabCount++;
+}
+
+void writeIfStatementIntChar(int value, char* condition, char symbol) {  
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+
+  fprintf(output_file, "if %d %s %c:\n", value, condition, symbol);
+
+  tabCount++;
 }
 
 void writeIncCommand(char symbol) {  
-  fprintf(output_file, "%c += 1\n", symbol);
-
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
   }
+
+  fprintf(output_file, "%c += 1\n", symbol);
 }
 
 void writeZeraCommand(char symbol) {  
-  fprintf(output_file, "%c = 0\n", symbol);
-
   for(int i = 0; i < tabCount; i++) {
     fprintf(output_file, "\t");
   }
+
+  fprintf(output_file, "%c = 0\n", symbol); 
 }
 
 void addReturnSymbol(char symbol) {
