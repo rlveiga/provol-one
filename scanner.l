@@ -9,6 +9,7 @@
 "SE"            { return SE; }
 "SENAO"         { return SENAO; }
 "FACA"          { return FACA; }
+"VEZES"         { return VEZES; }
 "INC"           { return INC; }
 "ZERA"          { return ZERA; }
 "FIM"           { return FIM; }
@@ -19,7 +20,6 @@
 "<="            { return LESSTHANEQ; }
 ">"             { return GREATERTHAN; }
 ">="            { return GREATERTHANEQ; }
-"VEZES"         { return VEZES; }
 [=+\-*/()]      { return yytext[0]; }
 [A-Z]+          { yylval.id = yytext[0]; return variavel; }
 [0-9]+          { yylval.number = atoi(yytext); return valor; }

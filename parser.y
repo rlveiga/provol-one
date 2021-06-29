@@ -14,6 +14,7 @@ int valoresArray[26]; /* assumindo variaveis de um caracter de A-Z */
 int tabCount = 1;
 
 int shouldWriteFunctionDeclaration = 1; /* evita problema de declaração duplicada */
+char currentAttributionSymbol; /* auxilia na escrita de atribuições */
 
 int parametersCount = 0;
 char functionParameters[10]; /* aceita até 10 parametros */
@@ -27,6 +28,10 @@ void addReturnSymbol(char symbol);
 
 void writeAttributionCommandChar(char symbolA, char symbolB);
 void writeAttributionCommandInt(char symbolA, int value);
+void writeAttributionCommandExpressionIntInt(int valueA, char* expression, int valueB);
+void writeAttributionCommandExpressionCharChar(char symbolA, char* expression, char symbolB);
+void writeAttributionCommandExpressionIntChar(int valueA, char* expression, char symbol);
+void writeAttributionCommandExpressionCharInt(char symbol, char* expression, int value);
 void writeIncCommand(char symbolA);
 void writeZeraCommand(char symbolA);
 void writeWhileStatement(char symbol);
@@ -63,7 +68,8 @@ void onProgramEnd();
 %token INC
 %token ZERA
 
-%type <number> line init expressao
+%type <number> line init
+/* %type <number> expressao */
 %type <id> varlist_entrada varlist_saida cmds atribuicao enquanto_condicao se_condicao
 %%
 
@@ -72,6 +78,7 @@ line	: programa init {;}
 init  : ENTRADA varlist_entrada SAIDA varlist_saida cmds FIM { onProgramEnd(); }
 	;
 
+/* uso de varlist_entrada e varlist_saida facilita a escrita da declaração de função e seu retorno */
 varlist_entrada : variavel { addFunctionParameter($1); } |
                   varlist_entrada COMMA variavel { addFunctionParameter($3); }
   ;
@@ -120,28 +127,36 @@ se_condicao : variavel IS variavel { writeIfStatement($1, "==", $3); } |
   ;
 
 atribuicao : variavel '=' variavel { writeAttributionCommandChar($1, $3); } |
-             variavel '=' valor { writeAttributionCommandInt($1, $3); } |
-             variavel '=' expressao { writeAttributionCommandInt($1, $3); }
+             variavel '=' valor { writeAttributionCommandInt($1, $3); } /* |
+              variavel '=' expressao { currentAttributionSymbol = $1; } */
   ;
 
-expressao : valor '+' valor { ; } |
-            variavel '+' variavel { ; } |
-            variavel '+' valor { ; } |
-            valor '+' variavel { ; } |
-            valor '-' valor { ; } |
-            variavel '-' variavel { ; } |
-            variavel '-' valor { ; } |
-            valor '-' variavel { ; } |
-            valor '*' valor { ; } |
-            variavel '*' variavel { ; } |
-            variavel '*' valor { ; } |
-            valor '*' variavel { ; } |
-            valor '/' valor { ; } |
-            variavel '/' variavel { ; } |
-            variavel '/' valor { ; } |
-            valor '/' variavel { ; }
-  ;
+/* removi o uso de expressoes pois apresentavam um problema, não consegui escrever o lado esquerdo da atribuicao */
+/* expressao : valor '+' valor { writeAttributionCommandExpressionIntInt($1, "+", $3); } |
+            variavel '+' variavel { writeAttributionCommandExpressionCharChar($1, "+", $3); } |
+            variavel '+' valor { writeAttributionCommandExpressionCharInt($1, "+", $3); } |
+            valor '+' variavel { writeAttributionCommandExpressionIntChar($1, "+", $3); } |
+            valor '-' valor { writeAttributionCommandExpressionIntInt($1, "-", $3); } |
+            variavel '-' variavel { writeAttributionCommandExpressionCharChar($1, "-", $3); } |
+            variavel '-' valor { writeAttributionCommandExpressionCharInt($1, "-", $3); } |
+            valor '-' variavel { writeIfStatementIntChar($1, "-", $3); } |
+            valor '*' valor { writeAttributionCommandExpressionIntInt($1, "*", $3); } |
+            variavel '*' variavel { writeAttributionCommandExpressionCharChar($1, "*", $3); } |
+            variavel '*' valor { writeAttributionCommandExpressionCharInt($1, "*", $3); } |
+            valor '*' variavel { writeIfStatementIntChar($1, "*", $3); } |
+            valor '/' valor { writeAttributionCommandExpressionIntInt($1, "/", $3); } |
+            variavel '/' variavel { writeAttributionCommandExpressionCharChar($1, "/", $3); } |
+            variavel '/' valor { writeAttributionCommandExpressionCharInt($1, "/", $3); } |
+            valor '/' variavel { writeIfStatementIntChar($1, "/", $3); }
+  ; */
 %%
+
+// Identação é fundamental na interpretação de Python
+void createTabIndentation() {
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+}
 
 void addFunctionParameter(char symbol) {
   functionParameters[parametersCount] = symbol;
@@ -169,25 +184,45 @@ void writeFunctionDeclaration() {
 }
 
 void writeAttributionCommandChar(char symbolA, char symbolB) {
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }  
+  createTabIndentation();  
 
   fprintf(output_file, "%c = %c\n", symbolA, symbolB);
 }
 
 void writeAttributionCommandInt(char symbolA, int value) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "%c = %d\n", symbolA, value);
 }
 
+
+void writeAttributionCommandExpressionIntInt(int valueA, char* expression, int valueB) {
+  createTabIndentation();
+
+  fprintf(output_file, "%c = %d %s %d\n", currentAttributionSymbol, valueA, expression, valueB);
+}
+
+void writeAttributionCommandExpressionCharChar(char symbolA, char* expression, char symbolB) {
+  createTabIndentation();
+
+  fprintf(output_file, "%c = %c %s %c\n", currentAttributionSymbol, symbolA, expression, symbolB);
+}
+
+void writeAttributionCommandExpressionCharInt(char symbol, char* expression, int value) {
+  createTabIndentation();
+
+  fprintf(output_file, "%c = %c %s %d\n", currentAttributionSymbol, symbol, expression, value);
+}
+
+
+void writeAttributionCommandExpressionIntChar(int value, char* expression, char symbol) {
+  createTabIndentation();
+
+  fprintf(output_file, "%c = %d %s %c\n", currentAttributionSymbol, value, expression, symbol);
+}
+
 void writeWhileStatement(char symbol) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "while %c:\n", symbol);
 
@@ -195,9 +230,7 @@ void writeWhileStatement(char symbol) {
 }
 
 void writeIfStatement(char symbolA, char* condition, char symbolB) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "if %c %s %c:\n", symbolA, condition, symbolB);
 
@@ -205,9 +238,7 @@ void writeIfStatement(char symbolA, char* condition, char symbolB) {
 }
 
 void writeIfStatementCharInt(char symbol, char* condition, int value) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "if %c %s %d:\n", symbol, condition, value);
 
@@ -215,9 +246,7 @@ void writeIfStatementCharInt(char symbol, char* condition, int value) {
 }
 
 void writeIfStatementIntChar(int value, char* condition, char symbol) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "if %d %s %c:\n", value, condition, symbol);
 
@@ -225,9 +254,7 @@ void writeIfStatementIntChar(int value, char* condition, char symbol) {
 }
 
 void writeElseStatement() {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "else:\n");
 
@@ -235,9 +262,7 @@ void writeElseStatement() {
 }
 
 void writeForStatement(int numrept) {
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "for i in range(%d):\n", numrept);
 
@@ -245,17 +270,13 @@ void writeForStatement(int numrept) {
 }
 
 void writeIncCommand(char symbol) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "%c += 1\n", symbol);
 }
 
 void writeZeraCommand(char symbol) {  
-  for(int i = 0; i < tabCount; i++) {
-    fprintf(output_file, "\t");
-  }
+  createTabIndentation();
 
   fprintf(output_file, "%c = 0\n", symbol); 
 }
