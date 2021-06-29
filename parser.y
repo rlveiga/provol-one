@@ -38,6 +38,7 @@ void writeWhileStatement(char symbol);
 void writeIfStatement(char symbolA, char* condition, char symbolB);
 void writeIfStatementCharInt(char symbol, char* condition, int value);
 void writeIfStatementIntChar(int value, char* condition, char symbol);
+void writeElseStatement();
 
 void onProgramEnd();
 %}
@@ -51,6 +52,7 @@ void onProgramEnd();
 %token SAIDA
 %token ENQUANTO
 %token SE
+%token SENAO
 %token FACA
 %token FIM
 %token COMMA
@@ -90,6 +92,8 @@ cmds : atribuicao {;} |
        cmds ENQUANTO enquanto_condicao FACA cmds FIM { tabCount--; } |
        SE se_condicao FACA cmds FIM { tabCount--; } |
        cmds SE se_condicao FACA cmds FIM { tabCount--; } |
+       SE se_condicao FACA cmds FIM { tabCount--; } SENAO { writeElseStatement(); } cmds FIM { tabCount--; } |
+       cmds SE se_condicao FACA cmds FIM { tabCount--; } SENAO { writeElseStatement(); } cmds FIM { tabCount--; } |
        INC '(' variavel ')' { incrementValue($3); writeIncCommand($3); } |
        cmds INC '(' variavel ')' { incrementValue($4); writeIncCommand($4); } |
        ZERA '(' variavel ')' { zeroValue($3); writeZeraCommand($3); } |
@@ -241,6 +245,16 @@ void writeIfStatementIntChar(int value, char* condition, char symbol) {
   }
 
   fprintf(output_file, "if %d %s %c:\n", value, condition, symbol);
+
+  tabCount++;
+}
+
+void writeElseStatement() {  
+  for(int i = 0; i < tabCount; i++) {
+    fprintf(output_file, "\t");
+  }
+
+  fprintf(output_file, "else:\n");
 
   tabCount++;
 }

@@ -7,6 +7,7 @@
 "SAIDA"       { return SAIDA; }
 "ENQUANTO"    { return ENQUANTO; }
 "SE"          { return SE; }
+"SENAO"       { return SENAO; }
 "FACA"        { return FACA; }
 "INC"         { return INC; }
 "ZERA"        { return ZERA; }
